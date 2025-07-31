@@ -54,6 +54,7 @@ all={'lightvel':['velocity of light in vacuum','c',cloc,0., 0.,'299 792 458(ex) 
 # many common values are also available as global constants:
 global alpha,a_0,c,e,eps_0,F,G,g_e,g_p,gamma_p,h,hbar,k_B
 global m_d,m_e,m_n,m_p,mu_B,mu_e,mu_N,mu_p,mu_0,N_A,R,sigma,u
+global M_sun, AU
 alpha = all['alpha'][2]
 a_0 =  all['bohrradius'][2]
 c = cloc
@@ -80,6 +81,10 @@ N_A =  all['avogadro'][2]
 R =  all['gas'][2]
 sigma =  all['stefan-boltzm'][2]
 u =  all['amu'][2]
+M_sun = 1.989e30      # Solar mass in kg (SI units)
+AU = 1.496e11         # Astronomical unit in meters (SI units)
+M_sun_cgs = 1.989e33  # Solar mass in grams
+AU_cgs = 1.496e13     # Astronomical unit in centimeters
 
 
 def help():
@@ -114,9 +119,9 @@ def descr(key):
     print('  Relative stdev:     ',all[key][4])
     print('  value(sd) unit:     ',all[key][5])
     print('  Source:             ',all[key][6],'\n')
-    
 
 
 
-    
-    
+
+
+

@@ -34,7 +34,7 @@ R_e                     = 6.378e6              # m
 
 class disk_master():
         #print("-- Setting up a disk: the basics")
-        def __init__(self, M_0=0.05*M_sun, alpha=1e-4, s_0=33*auSI, T_e=1380.0, M_star=1.0*M_sun, T_star=4200.0, R_star=1.0*R_sun, kappa_0=0.3, mu=2.4 , dtgr = 0.01, plnr = 0.15, pebr = 0.35, dustr = 0.005, vfrag = 1, rhos=1250):
+        def __init__(self, M_0=0.05*M_sun, alpha=1e-4, s_0=33*auSI, T_e=1380.0, M_star=1.0*M_sun, T_star=4200.0, R_star=1.0*R_sun, kappa_0=0.3, mu=2.4 , dtgr = 0.01, plnr = 0.15, pebr = 0.35, dustr = 0.005, vfrag = 1, rhos=1250, t_peb=5.5e6*yr):
         # def __init__(self, M_0, alpha, s_0, T_e, M_star, T_star, R_star, kappa_0, mu , dtgr, plnr, pebr, vfrag, rhos):
                 self.M_0            = M_0                  # starting mass of disk in kg
                 self.alpha          = alpha                # shakura-sunyeav alpha paramater (efficiency of momenntum transport taking into account turbulence)
@@ -54,6 +54,13 @@ class disk_master():
                 self.dustr          = dustr                # dust fraction
                 self.vfrag          = vfrag                # pebble fragmentation speed, chambers 2018 popsyn, table 1, in m/s    
                 self.rhos           = rhos                 # internal density of solids in kg/m^3 (based on Drazkowska+2021)
+
+                # New parameters for pebble flux/surface density
+                self.G              = physcon.G            # gravitational constant [m^3 kg^-1 s^-2]
+                self.AU             = physcon.AU           # astronomical unit [m]
+                self.r_outer        = 100 * self.AU        # outer disk radius [m]
+                self.t_peb          = t_peb                # pebble flux decay time [s]
+                self.dMdt_peb0      = 1e-4 * self.M_star / (1e6 * yr)  # [kg/s], 1e-4 M_star per Myr
 
         # Eq. 11 -- Keplerian frequency [s^-1], orbital velocity
         def get_Omega(self, radius ):
@@ -256,7 +263,7 @@ class disk_visc(disk_master):
                         return {'C/H_gas':Cgas, 'O/H_gas':Ogas, 'N/H_gas':Ngas, 'S/H_gas':Sgas,
                                 'P/H_gas':Pgas, 'C/H_ice':Cice, 'O/H_ice':Oice, 'N/H_ice':Nice,
                                 'S/H_ice':Sice, 'P/H_ice':Pice}
-                        
+
 class disk_viscirr(disk_master):
         print("-- Setting up a disk subclass: viscous and irradiated (Chambers 2009)")
         def __init__(self, **kwargs):
@@ -649,6 +656,44 @@ class DiskPlanetforming:
 
         def get_M_numerical(self, disk, time_array, radius_array):
                 return np.array([np.sum([(radius_array[i+1] - radius_array[i]) * 2 * np.pi * ((radius_array[i] + radius_array[i+1]) / 2) * disk.get_Sigma(time, (radius_array[i] + radius_array[i+1]) / 2) for i in range(len(radius_array)-1)]) for time in time_array])/self.M_star
+        
+        def pebble_flux(self, t):
+            """
+            Time-dependent pebble flux, exponentially decaying with time.
+
+            Parameters:
+            t - Time [s] (float)
+
+            Outputs:
+            Pebble mass flux [kg/s] (float)
+
+            (Chambers 2018, Eq. (3))
+            """
+            return self.dMdt_peb0 * np.exp(-t / self.t_peb * self.r_outer / (100 * self.AU))
+
+        def pebble_surface_density(self, r, t):
+            """
+            Pebble surface density calculated from drift velocity and pebble flux.
+
+            Parameters:
+            r - Radial distance [m] (float)
+            t - Time [s] (float)
+
+            Outputs:
+            Pebble surface density [kg/m^2] (float)
+
+            (Chambers 2018, Eq. (5))
+            """
+            vkep = self.get_Omega(r) * r  # Keplerian velocity [m/s]
+            T = 300 * (r / self.AU)**-0.5  # Example temperature profile, adjust as needed
+            cs = self.get_cs(T)            # Sound speed [m/s]
+            eta_val = (cs / vkep)**2       # Pressure support parameter
+            st_turb = self.vfrag**2 / (3 * self.alpha * cs**2)
+            st_drift = self.vfrag / (eta_val * vkep)
+            st = min(st_turb, st_drift)
+            vr = 2 * eta_val * vkep * st / (1 + st**2)
+            flux = self.pebble_flux(t)
+            return flux / (2 * np.pi * r * vr + 1e-20)  # [kg/m^2], small term prevents div-by-zero
 
 # =============================================================================
 #           STOKES NUMBERS & GRAIN SIZES
