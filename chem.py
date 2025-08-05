@@ -1,6 +1,5 @@
 # CHNOPS project
 # Chemical model
-#
 # by Mihkel Kama and Oliver Shorttle
 # 2020
 
@@ -10,15 +9,6 @@ import numpy
 import numpy as np
 import physcon
 import disk as ds
-
-# print("")
-# print("----------------------")
-# print("----------------------")
-# print("-- Chemistry module --")
-# print("----------------------")
-# print("----------------------")
-# print("   All units are SI unless stated otherwise.")
-# print("")
 
 # print("-- All units are assumed SI unless explicitly stated otherwise.")
 # TODO: Standard values and constants that should really be defined somewhere else, like the main.py module (or the chemistry module as global variables)
