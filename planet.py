@@ -707,7 +707,6 @@ class planet_disk_chem:     # PLANET FORMATION & DISK EVOLUTION CLASS WITH CHEMI
     def get_other(self):
         return self.ind_peb, self.ind_con, self.ind_mig, self.pebble_surface_density, self.planetesimal_grid, self.pebble_sigma_evo, self.species_evo
 
-
 class disk_chem:            # DISK EVOLUTION CLASS WITH CHEMISTRY
     """
     A class that evolves the disk chemistry with the H2S and Fe species.
